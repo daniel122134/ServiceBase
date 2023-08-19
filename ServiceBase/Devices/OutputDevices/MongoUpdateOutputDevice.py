@@ -9,6 +9,7 @@ from Products.MongoUpdateProduct import MongoUpdateProduct
 class MongoUpdateOutputDevice(BaseOutputDevice):
     def __init__(self, serializer, device_name, connection_string, db_name, id_fields):
         BaseOutputDevice.__init__(self, serializer, device_name)
+        self.id_fields = id_fields
         c = pymongo.MongoClient(connection_string, tls=True, tlsAllowInvalidCertificates=True)
         db = c[db_name]
         self.db = db
@@ -28,12 +29,20 @@ class MongoUpdateOutputDevice(BaseOutputDevice):
         results = None
         mongo_id = None
         doc = {}
-        for field, value in mongo_update_product.id_fields.items():
-            results = self.db[collection_name].find({field: value})
-            if results.count() == 1:
-                doc = results[0]
-                mongo_id = results[0]["_id"]
-                break
+        for id_field in self.id_fields:
+            field_name = id_field["name"]
+            value_source = id_field["name"]
+            field_type = id_field["type"]
+            if "valueSource" in id_field:
+                value_source = id_field["valueSource"]
+            if value_source in mongo_update_product.id_fields:
+                value = mongo_update_product.id_fields[value_source]
+                if field_type in [str, list]:
+                    results = self.db[collection_name].find({field_name: value})
+                    if results.count() == 1:
+                        doc = results[0]
+                        mongo_id = results[0]["_id"]
+                        break
 
         if results is None or results.count() == 0:
             self.logger.info(
@@ -47,7 +56,15 @@ class MongoUpdateOutputDevice(BaseOutputDevice):
         for key, value in fields_to_update.items():
             if doc.get(key) != value:
                 if key != "itemId" and key != "updateTime" and doc.get(key) is not None:
-                    mongo_update_product.append_fields.append({"history":{key: doc.get(key), "updateTime": doc.get("updateTime")}})
+                    if key == "fullName":
+                        mongo_update_product.append_fields.append({"reportedNames":doc.get(key)})
+                    elif key == "email":
+                        mongo_update_product.append_fields.append({"reportedEmails":doc.get(key)})
+                    else:
+                        mongo_update_product.append_fields.append({"history":{key: doc.get(key),
+                                                                              "updateTime": doc.get("updateTime"),
+                                                                              "overriderSource" : product.source,
+                                                                              "overriderName" : product.product_name}})
                 update_dict[key] = value
         
         for append_field in mongo_update_product.append_fields:
@@ -61,7 +78,7 @@ class MongoUpdateOutputDevice(BaseOutputDevice):
                     for current_item in current_data:
                         is_identical = True
                         for attr, attr_value in current_item.items():
-                            if attr_value != value.get(attr,"") and attr_value != "" and value.get(attr,"") != "":
+                            if attr_value != value.get(attr,"") and attr_value != "" and value.get(attr,"") != "" and "url" not in attr.lower():
                                 is_identical = False
                                 break
 
@@ -89,31 +106,31 @@ class MongoUpdateOutputDevice(BaseOutputDevice):
 
         if product.first_name:
             if not self.is_hebrew(product.first_name):
-                product.first_name = product.first_name.title().replace("-", " ").strip()
+                product.first_name = product.first_name.lower().replace("-", " ").strip()
             else:
                 product.hebrew_first_name = product.first_name.replace("-", " ").strip()
 
         if product.last_name:
             if not self.is_hebrew(product.last_name):
-                product.last_name = product.last_name.title().replace("-", " ").strip()
+                product.last_name = product.last_name.lower().replace("-", " ").strip()
             else:
                 product.hebrew_last_name = product.last_name.replace("-", " ").strip()
 
         if product.first_name and product.last_name:
             if not self.is_hebrew(product.last_name) and not self.is_hebrew(product.first_name):
                 full_name = product.first_name + " " + product.last_name
-                product.__setattr__("full_name", full_name.title().replace("-", " ").strip())
+                product.__setattr__("full_name", full_name.lower().replace("-", " ").strip())
             else:
                 hebrew_full_name = product.first_name + " " + product.last_name
-                product.__setattr__("full_name", hebrew_full_name.title().replace("-", " ").strip())
+                product.__setattr__("full_name", hebrew_full_name.lower().replace("-", " ").strip())
 
         if product.full_name:
             if self.is_hebrew(product.full_name):
-                product.hebrew_full_name = product.full_name.title().replace("-", " ").strip()
+                product.hebrew_full_name = product.full_name.lower().replace("-", " ").strip()
                 product.full_name = None
 
         if product.full_name:
-            product.full_name = product.full_name.title().replace("-", " ").strip()
+            product.full_name = product.full_name.lower().replace("-", " ").strip()
             new_product.id_fields["fullName"] = product.full_name
         if product.linkedin:
             new_product.id_fields["linkedin"] = product.linkedin.lower()
@@ -125,10 +142,7 @@ class MongoUpdateOutputDevice(BaseOutputDevice):
             product.email = product.email.lower()
             
         if product.mobile_number:
-            if product.mobile_number.startswith("1"):
-                product.mobile_number = "+" + product.mobile_number
-            parsed_number = phonenumbers.parse(product.mobile_number, "IL")
-            formatted_number = phonenumbers.format_number(parsed_number, phonenumbers.PhoneNumberFormat.E164)
+            formatted_number = self.format_number(product.mobile_number)
             new_product.id_fields["mobileNumber"] = formatted_number
             product.mobile_number = formatted_number
 
@@ -136,19 +150,24 @@ class MongoUpdateOutputDevice(BaseOutputDevice):
             new_product.append_fields.append(
                 {"registrations": {"eventName": product.product_name, "registrationDate": product.registration_date}})
             product.__delattr__("registration_date")
-            product.__delattr__("product_name")
 
         for attr in [a for a in dir(product) if not a.startswith('__') and not callable(getattr(product, a))]:
             if attr != "stream" and attr != "source" and attr != "product_type":
-                if product.__getattribute__(attr):
+                if product.__getattribute__(attr) and attr != "product_name":
                     new_product.update_fields.append((underscore_to_camelcase(attr), product.__getattribute__(attr)))
 
         return new_product
 
+    def format_number(self,number):
+        if number.startswith("1"):
+            number = "+" + number
+        parsed_number = phonenumbers.parse(number, "IL")
+        return phonenumbers.format_number(parsed_number, phonenumbers.PhoneNumberFormat.E164)
+
     def serialize_product(self, product):
         for i, field in enumerate(product.update_fields):
             if "Name" in field[0]:
-                field = (field[0], field[1].title().replace("-", " "))
+                field = (field[0], field[1].lower().replace("-", " "))
                 product.update_fields[i] = field
             if field[0] == "linkedin":
                 field = (field[0], field[1].lower())

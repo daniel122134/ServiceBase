@@ -38,7 +38,7 @@ class ServiceBase(object):
                                     try:
                                         output_device.send_product(result_product)
                                     except Exception as e:
-                                        self.logger.error(
+                                        self.logger.exception(
                                             "output device failed to send product Sending to bad. reason:{}.".format(e))
                                         self.handle_bad_product(result_product)
 

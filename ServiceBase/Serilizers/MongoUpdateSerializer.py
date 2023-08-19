@@ -29,8 +29,8 @@ class MongoUpdateSerializer(Serializer):
         new_product = MongoUpdateProduct(product.stream, product.source, product.product_type, **product.extra_params)
 
         full_name = product.first_name + " " + product.last_name
-        product.__setattr__("full_name", full_name.title().replace("-", " "))
-        new_product.id_fields["fullName"] = full_name.title().replace("-", " ")
+        product.__setattr__("full_name", full_name.lower().replace("-", " "))
+        new_product.id_fields["fullName"] = full_name.lower().replace("-", " ")
 
         if product.linkedin:
             new_product.id_fields["linkedin"] = product.linkedin.lower()
@@ -47,9 +47,9 @@ class MongoUpdateSerializer(Serializer):
             new_product.id_fields["mobileNumber"] = formatted_number
             product.mobile_number = formatted_number
         if product.first_name:
-            product.first_name= product.first_name.title().replace("-", " ")
+            product.first_name= product.first_name.lower().replace("-", " ")
         if product.last_name:
-            product.last_name= product.last_name.title().replace("-", " ")
+            product.last_name= product.last_name.lower().replace("-", " ")
 
 
 
@@ -62,7 +62,7 @@ class MongoUpdateSerializer(Serializer):
     def serialize_product(self, product):
         for i, field in  enumerate(product.update_fields):
             if "Name" in field[0]:
-                field = (field[0], field[1].title().replace("-", " "))
+                field = (field[0], field[1].lower().replace("-", " "))
                 product.update_fields[i] = field
             if field[0] == "linkedin":
                 field = (field[0], field[1].lower())

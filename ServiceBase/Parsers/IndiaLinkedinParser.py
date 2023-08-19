@@ -1,6 +1,9 @@
+import re
+
 from Parsers.ParserBase import ParserBase
 from Products.ProductBase import Product
 from Products.csvProducts import CsvProduct
+
 
 class IndiaLinkedinParser(ParserBase):
     def __init__(self, result_product_class: type):
@@ -10,44 +13,39 @@ class IndiaLinkedinParser(ParserBase):
                                     "jobLocation"]
         self.school_fields_prefixes = ["school", "schoolUrl", "schoolDegree", "schoolDescription", "schoolDateRange"]
         self.skill_prefix = "skill"
-        self.interest_prefix = "interestGroup"
+        self.interest_prefix = "interestsGroup"
         self.volunteering_fields_prefix = ["volunteeringPosition", "volunteeringInstatution", "volunteeringField"]
         self.update_fields = ["fullName", "linkedinProfile", "firstName", "lastName", "headline", "location",
                               "description", "connectionCount"]
 
-    def parse_set_to_list_from_string(self, data):
-        if data.startswith("{"):
-            data = eval(data)
-        else:
-            data = [data]
-        data = list(data)
-        data.remove("")
-        data.remove("missing")
-        return data
-    
-    def clean(self,value):
+    def clean(self,attr, value):
         value = value.lower()
-        if value=="missing":
-            value=""
+        if attr != "linkedinProfile":
+            value = value.replace("-", " ")
+        value = value.replace("\t", " ")
+        value = value.replace("\n", " ")
         value = value.strip()
         value = value.strip("/")
+        value = re.sub(" {2,}", " ", value)
+        if value == "missing" or value == "missng":
+            value = ""
         first_word = value.split(" ")[0]
         if value.endswith(first_word) and len(first_word) != len(value):
             value = value[:-len(first_word)]
         return value
-    
+
     def parse(self, product_to_parse: CsvProduct):
         result_products = []
 
         for record in product_to_parse.records:
 
             for attr, value in record.items():
-                value = self.clean(value)
+                value = self.clean(attr, value)
                 record[attr] = value
-                
+
             result_product: Product = product_to_parse.clone(self.result_product_class)
             result_product.id_fields = {"linkedin": record.get("linkedinProfile"),
-                                         "fullName": record.get("fullName").title()}
+                                        "fullName": record.get("fullName").lower()}
             result_product.append_fields = []
             result_product.update_fields = []
             for i in range(6):

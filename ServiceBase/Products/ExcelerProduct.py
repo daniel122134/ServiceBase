@@ -10,10 +10,12 @@ class ExcelerProduct(Product):
         Product.__init__(self, stream, source, product_type, **kwargs)
 
         self.registration_date = None
+        self.product_name = None
         self.update_time = datetime.now()
         self.linkedin = linkedin
         self.first_name = first_name
         self.last_name = last_name
+        self.full_name = None
         self.mobile_number = mobile_number
         self.email = email
         self.gender = gender

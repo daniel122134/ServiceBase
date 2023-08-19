@@ -29,7 +29,8 @@ class RegexExtractorParser(ParserBase):
                             for key, value in results.items():
                                 results[key] = config["lambda"](value)
                         for key, value in results.items():
-                            value = None if type(value) == str and value.lower() in ["null", "", "none"] else value
+                            if key != "salesforce_id" and key != "linkedin":
+                                value = None if type(value) == str and value.lower() in ["null", "", "none"] else re.sub(" {2,}"," ",value.lower().replace("-"," ").replace("\t"," ").replace("\n"," ")) if type(value) == str else value
                             value = value.strip() if type(value) == str else value
                             value = value.strip("/") if type(value) == str else value
                             result_product.__setattr__(key, value)
