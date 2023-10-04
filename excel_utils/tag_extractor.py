@@ -83,8 +83,8 @@ def main():
         openai.api_key = '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'
 
         chat = openai.ChatCompletion.create(
-            # model="gpt-3.5-turbo-16k", messages=messages
-            model="gpt-4", messages=messages
+            model="gpt-3.5-turbo-16k", messages=messages
+            # model="gpt-4", messages=messages
         )
         
         reply = chat.choices[0].message.content
