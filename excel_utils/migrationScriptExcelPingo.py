@@ -15,6 +15,8 @@ def main():
         number = profile.get("mobileNumber", None)
         hebrew_first_name = profile.get("hebrewFirstName", None)
         hebrew_last_name = profile.get("hebrewLastName", None)
+        english_first_name = profile.get("firstName", None)
+        english_last_name = profile.get("lastName", None)
         if number is not None and hebrew_first_name is not None:
             if hebrew_last_name is None:
                 hebrew_last_name = ""
@@ -28,6 +30,8 @@ def main():
                                 {"field": "firstname", "value": hebrew_first_name},
                                 {"field": "lastname", "value": hebrew_last_name},
                                 {"field": "name", "value": hebrew_name},
+                                {"field": "englishfirstname", "value": english_first_name},
+                                {"field": "englishlastname", "value": english_last_name},
 
                             ]
                         }},
@@ -35,9 +39,10 @@ def main():
 
             }
             headers = {
-                "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImlvVmM1OEJINFFTQmZ5NnpldHZsdyJ9.eyJodHRwczovL3BpbmdvYXBwLm5ldC9lbWFpbCI6ImV2ZW50c2V4Y2VsQHRhZ2xpdGJyaS5nbG9iYWwiLCJpc3MiOiJodHRwczovL2Rldi03YWZwd2R2MnFhbXVkMXl6LnVzLmF1dGgwLmNvbS8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDEwMjc5NzgwOTE3MzEwMjQ1NDcxNyIsImF1ZCI6WyJodHRwczovL25vZGUtanMtYmFja2VuZC8iLCJodHRwczovL2Rldi03YWZwd2R2MnFhbXVkMXl6LnVzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE2OTI3OTQwNjQsImV4cCI6MTY5Mjg4MDQ2NCwiYXpwIjoia01XV0JrMmlyYkFnem93SFpibTdsVDVxa0piN1F1ZjEiLCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwicGVybWlzc2lvbnMiOltdfQ.eH4mnantALrD4xPnMy5Z_co1rcY0voOStaMdodOQ7HtdpCleLSEiitf_1KPlfRPnRc5Yhy2nfhfNbMG45p0YxohLuViS_G7DS1SHa3Tm_VHTxU1cNTg-IVGn9BQmS5O3MN6HBpWTBzdYsp-yjZsuixrjX6xzpcg-0cLcd1-GE3iwV_B_t4JS7rWhW3RdyPLcrtdBKZ3FMCuKFJZTu_Nw_jcyXEe1bsGofdlnwFD4b03MThqgVuC5sMaf0_jPwr7NELqMDNmtPhAIbvy9r6b0lJcMDhd3rCZzbCr2oOtKrBGouJUI3wC5ng8F1ovRh_7DoLNIpxCoLSdQSwgYqOEvlA"
+                "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImlvVmM1OEJINFFTQmZ5NnpldHZsdyJ9.eyJodHRwczovL3BpbmdvYXBwLm5ldC9lbWFpbCI6ImV2ZW50c2V4Y2VsQHRhZ2xpdGJyaS5nbG9iYWwiLCJpc3MiOiJodHRwczovL2Rldi03YWZwd2R2MnFhbXVkMXl6LnVzLmF1dGgwLmNvbS8iLCJzdWIiOiJnb29nbGUtb2F1dGgyfDEwMjc5NzgwOTE3MzEwMjQ1NDcxNyIsImF1ZCI6WyJodHRwczovL25vZGUtanMtYmFja2VuZC8iLCJodHRwczovL2Rldi03YWZwd2R2MnFhbXVkMXl6LnVzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE2OTU5OTA4NDUsImV4cCI6MTY5NjA3NzI0NSwiYXpwIjoia01XV0JrMmlyYkFnem93SFpibTdsVDVxa0piN1F1ZjEiLCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwicGVybWlzc2lvbnMiOltdfQ.Yjh9TvanH9WzZDn8KMTNAaiOkVPIg2Kv0kt-G5RVcfeYsE8nxXMRsTg5DP56plv-rpaIhLfgWN2lmzxuCO8FEwgOYV7qAqHLlQGmnhe9aRnRxsrjv-pqutCwY1raeK4yiCEAjNIpTrBBOH8an0MsJVntVhrhDpb-fi-2yTFL20s4ir5BHdMTar4mRLM30ZKo5co7i8ppOQWNTQJMMQqUb88dldJi5IhNvY4UtMxlUr07A97iraHTRJVdSpwznodjEV89HzeJCF9i_FYmlID6eg1rYaj6yupcg0yvyAFQug6yLGJQCpMu_-30nqNhdFCKOSKICVucqdkJrrYQrCNmHQ"
             }
             response = requests.post(pingo_url, json=data, headers=headers)
+            print(response.content)
             x = 5
 
 
