@@ -80,7 +80,7 @@ def main():
         )
         
 
-        openai.api_key = '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'
+        openai.api_key = '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'
 
         chat = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k", messages=messages

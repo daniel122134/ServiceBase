@@ -161,8 +161,11 @@ class MongoUpdateOutputDevice(BaseOutputDevice):
     def format_number(self,number):
         if number.startswith("1"):
             number = "+" + number
-        parsed_number = phonenumbers.parse(number, "IL")
-        return phonenumbers.format_number(parsed_number, phonenumbers.PhoneNumberFormat.E164)
+        try:
+            parsed_number = phonenumbers.parse(number, "IL")
+            return phonenumbers.format_number(parsed_number, phonenumbers.PhoneNumberFormat.E164)
+        except:
+            return None
 
     def serialize_product(self, product):
         for i, field in enumerate(product.update_fields):
